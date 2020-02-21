@@ -52,6 +52,54 @@ workload performance. You can limit access to this ability using Kubernetes acce
 See [Authorization Overview](/docs/reference/access-authn-authz/authorization/) for more details.
 {{< /note >}}
 
+
+### Usage example
+
+To use the `PodOverhead` feature, a `RuntimeClass` must be utilized which defines the `Overhead` field. As an example,
+if you were to use Kata Containers, you could register a RuntimeClass as follows:
+
+```yaml
+---
+kind: RuntimeClass
+apiVersion: node.k8s.io/v1beta1
+metadata:
+    name: kata-fc
+handler: kata-fc
+overhead:
+    podFixed:
+        memory: "120Mi"
+	cpu: "250m"
+```
+
+Workloads which are created which specify the `kata-fc` RuntimeClass handler will take the memory and
+cpu overheads into account for resource quota calculations, node scheduling, as well as pod cgroup sizing.
+
+For the given example workload,
+
+```yaml
+```
+
+More specifically, at admission time the RuntimeClass admission controller will update the workload's PodSpec to
+include the Overhead field. If the PodSpec already has this field defined, the pod will be rejected.
+
+ If a namespace resource quota is defined, the sum of container requests as well as the
+overhead field are counted.
+
+When kube-scheduler runs, the overhead as well as sum of containe requests are taken into account when identifying
+an appropriate node binding.
+
+Once scheduled for the node, as part of the pod creation process, Kubelet will create a Pod cgroup (for non burstable QoS)
+and this will be sized as he sum of container (requests or limits) plus the overhead defined in the PodSpec. 
+
+### Observability
+
+Metrics are available in [kube-state-metrics](link) to help identify when PodOverhead is being utilized and to help observe
+stability of workloads running with a defined Overhead.
+
+[ ] and [ ].
+
+
+
 {{% /capture %}}
 
 {{% capture whatsnext %}}
